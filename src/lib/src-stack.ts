@@ -33,18 +33,35 @@ export class MainStack extends Stack {
 
         // Lambda (Docker image)
         const uploadDocumentLambdaFunctionName = 'upload-document';
-        const lambdaFunction = new DockerImageFunction(this, uploadDocumentLambdaFunctionName, {
-            functionName: uploadDocumentLambdaFunctionName,
-            code: DockerImageCode.fromImageAsset('lambdas/upload-images'), // directory in which Dockerfile exists
+        const uploadLambdaFunction = new DockerImageFunction(
+            this,
+            uploadDocumentLambdaFunctionName,
+            {
+                functionName: uploadDocumentLambdaFunctionName,
+                code: DockerImageCode.fromImageAsset('lambdas/upload-images'), // directory in which Dockerfile exists
+                environment: {
+                    BUCKET_NAME: documentBucket.bucketName,
+                    REGION: props.region,
+                },
+                timeout: Duration.seconds(29),
+                logGroup: dockerImageLambdaFunctionLogGroup,
+            },
+        );
+        documentBucket.grantPut(uploadLambdaFunction); // Lambda -> S3 (PUT Object)
+
+        // Lambda (Docker image)
+        const inferDocumentLambdaFunctionName = 'infer-document';
+        const inferLambdaFunction = new DockerImageFunction(this, inferDocumentLambdaFunctionName, {
+            functionName: inferDocumentLambdaFunctionName,
+            code: DockerImageCode.fromImageAsset('lambdas/inference'), // directory in which Dockerfile exists
             environment: {
                 BUCKET_NAME: documentBucket.bucketName,
-                REGION: props.region,
             },
             timeout: Duration.seconds(29),
             logGroup: dockerImageLambdaFunctionLogGroup,
+            memorySize: 1024,
         });
-
-        documentBucket.grantPut(lambdaFunction); // Lambda -> S3 (PUT Object)
+        documentBucket.grantRead(inferLambdaFunction); // Lambda -> S3 (Get Object)
 
         // API Gateway
         const restApiName = 'MyApi';
@@ -63,15 +80,20 @@ export class MainStack extends Stack {
             endpointTypes: [EndpointType.REGIONAL],
         });
 
-        const uploadIntegration = new LambdaIntegration(lambdaFunction, {
+        const uploadIntegration = new LambdaIntegration(uploadLambdaFunction, {
             timeout: Duration.seconds(20), // integration timeout APIGateway/Lambda
+        });
+        const inferenceIntegration = new LambdaIntegration(inferLambdaFunction, {
+            timeout: Duration.seconds(29),
         });
 
         // resource
         const imageResource = restApi.root.addResource('image');
+        const inferenceResource = restApi.root.addResource('infer');
 
         // API path definitions
         imageResource.addMethod('POST', uploadIntegration); // POST: /image
+        inferenceResource.addMethod('POST', inferenceIntegration); // POST: /infer
 
         // API path
         new CfnOutput(this, 'api-base-url', {
