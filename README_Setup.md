@@ -48,5 +48,12 @@ $ cd src
 $ cdk init app --language=typescript
 ```
 
+---
+
+## tool
+
+```
+$ npm install --save-dev prettier
+```
 
 ---
