@@ -28,6 +28,7 @@ export class MainStack extends Stack {
             {
                 logGroupName: 'docker-image-lambda-loggroup',
                 retention: RetentionDays.ONE_DAY,
+                removalPolicy: RemovalPolicy.DESTROY,
             },
         );
 
