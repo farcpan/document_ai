@@ -1,9 +1,19 @@
 import os
 import json
 import boto3
+from botocore.config import Config
 
 BUCKET_NAME = os.environ['BUCKET_NAME']
-s3_client = boto3.client('s3')
+REGION = os.environ["REGION"]
+s3_client = boto3.client(
+    's3', 
+    region_name=REGION, 
+    config=Config(
+        region_name=REGION,
+        signature_version='s3v4',
+        s3={'addressing_style': 'virtual'}, # important to force the endpoint hostname
+    )
+)
 
 
 def handler(event, context):
@@ -11,10 +21,10 @@ def handler(event, context):
     dirname = body.get("dirname")
     filename = body.get("filename")
 
-
     # signed url
     url = s3_client.generate_presigned_url(
-        'put_object',
+        ClientMethod='put_object',
+        HttpMethod='PUT',
         Params={'Bucket': BUCKET_NAME, 'Key': f"{dirname}/{filename}"},
         ExpiresIn=300   # 5min
     )

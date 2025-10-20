@@ -38,6 +38,7 @@ export class MainStack extends Stack {
             code: DockerImageCode.fromImageAsset('lambdas/upload-images'), // directory in which Dockerfile exists
             environment: {
                 BUCKET_NAME: documentBucket.bucketName,
+                REGION: props.region,
             },
             timeout: Duration.seconds(29),
             logGroup: dockerImageLambdaFunctionLogGroup,
