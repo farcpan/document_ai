@@ -40,3 +40,13 @@ $ cdk --version
 ```
 
 ---
+
+## initialize project
+
+```
+$ cd src
+$ cdk init app --language=typescript
+```
+
+
+---
