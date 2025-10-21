@@ -57,3 +57,31 @@ $ npm install --save-dev prettier
 ```
 
 ---
+
+## Docker
+
+* Creating ECR repository at first.
+    ```
+    $ aws ecr create-repository --repository-name upload-images-repo --region=ap-northeast-1 --profile=<your profile>
+    $ aws ecr create-repository --repository-name inference-repo --region=ap-northeast-1 --profile=<your profile>
+    ```
+* login
+    ```
+    $ aws ecr get-login-password --region=ap-northeast-1 --profile=<your profile> | docker login --username=AWS --password-stdin <account_id>.dkr.ecr.ap-northeast-1.amazonaws.com
+    ```
+* Building docker image on CLI.
+    ```
+    $ docker build -t upload-images ./lambdas/upload-images
+    $ docker build -t inference ./lambdas/inference
+    ```
+* Pushing docker image to repository
+    ```
+    $ docker tag upload-images:latest <account_id>.dkr.ecr.ap-northeast-1.amazonaws.com/upload-images-repo:latest
+    $ docker push <account_id>.dkr.ecr.ap-northeast-1.amazonaws.com/upload-images-repo:latest
+    $ docker tag inference:latest <account_id>.dkr.ecr.ap-northeast-1.amazonaws.com/inference-repo:latest
+    $ docker push <account_id>.dkr.ecr.ap-northeast-1.amazonaws.com/inference-repo:latest
+    ```
+* Finally, cdk deploy. 
+
+
+---

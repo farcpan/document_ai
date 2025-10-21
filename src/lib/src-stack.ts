@@ -4,6 +4,10 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { DockerImageCode, DockerImageFunction } from 'aws-cdk-lib/aws-lambda';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Cors, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { Repository } from 'aws-cdk-lib/aws-ecr';
+
+const uploadImageRepoArn = 'arn:aws:ecr:ap-northeast-1:910136156309:repository/upload-images-repo';
+const inferenceRepoArn = 'arn:aws:ecr:ap-northeast-1:910136156309:repository/inference-repo';
 
 interface MainStackProps extends StackProps {
     region: string;
@@ -12,6 +16,20 @@ interface MainStackProps extends StackProps {
 export class MainStack extends Stack {
     constructor(scope: Construct, id: string, props: MainStackProps) {
         super(scope, id, props);
+
+        // ECR
+        const uploadImagesRepoName = 'upload-images-repo';
+        const uploadImagesRepo = Repository.fromRepositoryArn(
+            this,
+            uploadImagesRepoName,
+            uploadImageRepoArn,
+        );
+        const inferenceRepoName = 'inference-repo';
+        const inferenceRepo = Repository.fromRepositoryArn(
+            this,
+            inferenceRepoName,
+            inferenceRepoArn,
+        );
 
         // S3 Bucket
         const bucketName = 'document-bucket-20251020';
@@ -39,7 +57,7 @@ export class MainStack extends Stack {
             uploadDocumentLambdaFunctionName,
             {
                 functionName: uploadDocumentLambdaFunctionName,
-                code: DockerImageCode.fromImageAsset('lambdas/upload-images'), // directory in which Dockerfile exists
+                code: DockerImageCode.fromEcr(uploadImagesRepo, { tagOrDigest: 'latest' }),
                 environment: {
                     BUCKET_NAME: documentBucket.bucketName,
                     REGION: props.region,
@@ -54,7 +72,7 @@ export class MainStack extends Stack {
         const inferDocumentLambdaFunctionName = 'infer-document';
         const inferLambdaFunction = new DockerImageFunction(this, inferDocumentLambdaFunctionName, {
             functionName: inferDocumentLambdaFunctionName,
-            code: DockerImageCode.fromImageAsset('lambdas/inference'), // directory in which Dockerfile exists
+            code: DockerImageCode.fromEcr(inferenceRepo, { tagOrDigest: 'latest' }),
             environment: {
                 BUCKET_NAME: documentBucket.bucketName,
             },
