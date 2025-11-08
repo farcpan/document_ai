@@ -38,7 +38,8 @@ def run_inference(input_image_path: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="YOLO inference runner")
     parser.add_argument("--image", required=True, help="Path to input image file")
+    parser.add_argument("--out", default="result.json")
     args = parser.parse_args()
 
     result = run_inference(args.image)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(json.dumps(result, ensure_ascii=False))

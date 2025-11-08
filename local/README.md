@@ -10,7 +10,7 @@
 ## execution
 
 ```
-# docker run --rm -v $(pwd):/app yolo-local python app.py --image /app/sample.jpg
+# docker run --rm -v $(pwd):/app yolo-local python app.py --image /app/sample.jpg --out /app/result.json
 ```
 
 ---
