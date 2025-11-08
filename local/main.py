@@ -1,13 +1,15 @@
-import subprocess
-import json
+
+import argparse
 import cv2
+import json
 import os
-
-IMAGE_PATH = "sample.jpg"          # 推論したい画像
-RESULT_JSON = "result.json"        # コンテナが出力する結果
+import subprocess
 
 
-def run_container():
+RESULT_JSON = "result.json"
+
+
+def run_container(image_filename):
     """
     Docker コンテナを実行して推論結果 JSON を生成する
     """
@@ -16,7 +18,7 @@ def run_container():
         "-v", f"{os.getcwd()}:/app",
         "yolo-local",
         "python", "app.py",
-        "--image", f"/app/{IMAGE_PATH}",
+        "--image", f"/app/{image_filename}",
         "--out", f"/app/{RESULT_JSON}"
     ]
 
@@ -25,7 +27,7 @@ def run_container():
     print("[INFO] Container finished.")
 
 
-def draw_results():
+def draw_results(image_filename):
     """
     result.json を読み込み、画像に描画して可視化
     """
@@ -34,9 +36,9 @@ def draw_results():
     with open(RESULT_JSON, "r", encoding="utf-8") as f:
         results = json.load(f)
 
-    img = cv2.imread(IMAGE_PATH)
+    img = cv2.imread(image_filename)
     if img is None:
-        raise FileNotFoundError(f"Image not found: {IMAGE_PATH}")
+        raise FileNotFoundError(f"Image not found: {image_filename}")
 
     for obj in results:
         x1, y1 = obj["x1"], obj["y1"]
@@ -57,5 +59,10 @@ def draw_results():
 
 
 if __name__ == "__main__":
-    run_container()
-    draw_results()
+    parser = argparse.ArgumentParser(description="YOLO inference runner")
+    parser.add_argument("--image", required=True, help="Path to input image file")
+    args = parser.parse_args()
+    image_path = args.image
+
+    run_container(image_filename=image_path)
+    draw_results(image_filename=image_path)
