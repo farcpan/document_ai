@@ -42,4 +42,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     result = run_inference(args.image)
-    print(json.dumps(result, ensure_ascii=False))
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
